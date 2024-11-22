@@ -1,5 +1,6 @@
 package com.playlabs.auth.ui
 
+import android.app.Activity
 import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
@@ -11,6 +12,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.playlabs.auth.presentation.viewmodel.LoginViewModel
 
@@ -24,6 +26,8 @@ fun LoginScreen(
     val otp = remember { mutableStateOf("") }
     val loginState by viewModel.loginState.observeAsState()
 
+    val activity = LocalContext.current as? Activity
+
     Column {
         // Phone Number Input
         TextField(
@@ -32,7 +36,7 @@ fun LoginScreen(
             label = { Text("Mobile Number") }
         )
         Button(onClick = {
-            viewModel.sendOtp("+91${phoneNumber.value}")
+            viewModel.sendOtp("+91${phoneNumber.value}", activity = activity)
         }) {
             Text("Send OTP")
         }

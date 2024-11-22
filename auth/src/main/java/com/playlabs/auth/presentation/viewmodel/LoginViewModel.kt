@@ -16,41 +16,53 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val auth: FirebaseAuth
-) : ViewModel() {
+    private val auth: FirebaseAuth,
+
+    ) : ViewModel() {
 
     private val _verificationId = MutableLiveData<String>()
     private val _loginState = MutableLiveData<Boolean>()
     val loginState: LiveData<Boolean> = _loginState
 
+
     // Send OTP to the user
-    fun sendOtp(phoneNumber: String) {
-        val options = PhoneAuthOptions.newBuilder(auth)
-            .setPhoneNumber(phoneNumber)
-            .setTimeout(60L, TimeUnit.SECONDS)
-            .setCallbacks(object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
-                override fun onVerificationCompleted(credential: PhoneAuthCredential) {
-                    signInWithCredential(credential)
-                }
+    fun sendOtp(phoneNumber: String, activity: Activity?) {
+        /*auth.firebaseAuthSettings.forceRecaptchaFlowForTesting(true);*/
 
-                override fun onVerificationFailed(e: FirebaseException) {
-                    // Handle failure
-                    Log.e("AUTH", "Error: ", e)
-                }
+        val options = activity?.let {
+            PhoneAuthOptions.newBuilder(auth)
+                .setPhoneNumber(phoneNumber)
+                .setTimeout(60L, TimeUnit.SECONDS)
+                .setActivity(it)
+                .setCallbacks(object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+                    override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                        signInWithCredential(credential)
+                    }
 
-                override fun onCodeSent(
-                    verificationId: String,
-                    token: PhoneAuthProvider.ForceResendingToken
-                ) {
-                    _verificationId.value = verificationId
-                    Log.d("AUTH", "Code sent ")
-                }
-            }).build()
-        PhoneAuthProvider.verifyPhoneNumber(options)
+                    override fun onVerificationFailed(e: FirebaseException) {
+                        // Handle failure
+                        Log.e("AUTH", "Error: ", e)
+                    }
+
+                    override fun onCodeSent(
+                        verificationId: String,
+                        token: PhoneAuthProvider.ForceResendingToken
+                    ) {
+                        _verificationId.value = verificationId
+                        Log.d("AUTH", "Code sent ")
+                    }
+                }).build()
+        }
+        if (options != null) {
+            PhoneAuthProvider.verifyPhoneNumber(options)
+        } else {
+            Log.e("AUTH", "Auth Options are null: activity is null ")
+        }
     }
 
     // Verify OTP
     fun verifyOtp(otp: String) {
+
         val credential = PhoneAuthProvider.getCredential(_verificationId.value!!, otp)
         signInWithCredential(credential)
     }
